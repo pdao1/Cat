@@ -1,51 +1,49 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const LostCat = require('./models/LostCat');
-const path = require('path');
-const async = require('async');
-const axios = require('axios');
-const cheerio = require('cheerio');
+const express = require("express");
+const mongoose = require("mongoose");
+const LostCat = require("./models/LostCat");
+const path = require("path");
+const async = require("async");
+const axios = require("axios");
+const cheerio = require("cheerio");
 const app = express();
 const port = 3000;
-const fs = require('fs')
-const bodyParser = require('body-parser');
-const mongoPass = process.env['mongoPass']
-const mongoFHB = process.env['mongoFHB']
-const AWS = require('aws-sdk');
+const fs = require("fs");
+const bodyParser = require("body-parser");
+const mongoPass = process.env["mongoPass"];
+const mongoFHB = process.env["mongoFHB"];
+const AWS = require("aws-sdk");
 
-const accessKeyId = process.env['accessKeyId']
-const secretAccessKey = process.env['secretAccessKey']
+const accessKeyId = process.env["accessKeyId"];
+const secretAccessKey = process.env["secretAccessKey"];
 
 const s3 = new AWS.S3({
-	accessKeyId: accessKeyId,
-	secretAccessKey: secretAccessKey,
+  accessKeyId: accessKeyId,
+  secretAccessKey: secretAccessKey,
 });
-var itemIds = new Array()
-const namesArray = []
+var itemIds = new Array();
+const namesArray = [];
 
 const uploadImageFromUrlToS3 = async (imageUrl, bucketName, fileName) => {
-	try {
-		const response = await axios.get(imageUrl, {
-			responseType: 'arraybuffer'
-		});
-		const buffer = Buffer.from(response.data, 'binary');
+  try {
+    const response = await axios.get(imageUrl, {
+      responseType: "arraybuffer",
+    });
+    const buffer = Buffer.from(response.data, "binary");
 
-		const params = {
-			Bucket: bucketName,
-			Key: fileName,
-			Body: buffer,
-			ACL: 'public-read',
-			ContentType: response.headers['content-type']
-		};
+    const params = {
+      Bucket: bucketName,
+      Key: fileName,
+      Body: buffer,
+      ACL: "public-read",
+      ContentType: response.headers["content-type"],
+    };
 
-		const data = await s3.upload(params).promise();
-		console.log(`Successfully uploaded image to S3: ${data.Location}`);
-	} catch (error) {
-		console.error(`Failed to upload image to S3: ${error}`);
-	}
+    const data = await s3.upload(params).promise();
+    console.log(`Successfully uploaded image to S3: ${data.Location}`);
+  } catch (error) {
+    console.error(`Failed to upload image to S3: ${error}`);
+  }
 };
-
-
 
 // mongoose.connect(`mongodb+srv://phungdao:phung123@geolocats.jcedrpx.mongodb.net/LostCat`, {
 
@@ -56,24 +54,21 @@ const uploadImageFromUrlToS3 = async (imageUrl, bucketName, fileName) => {
 // Routes
 
 // Main page
-app.get('/', (req, res) => {
-	res.sendFile(path.resolve('./public/index.html'))
-})
+app.get("/", (req, res) => {
+  res.sendFile(path.resolve("./public/index.html"));
+});
 // Thank you / confirmation page
-app.get('/confirmation', (req, res) => {
-	res.sendFile(path.resolve('./public/confirmation.html'))
-})
+app.get("/confirmation", (req, res) => {
+  res.sendFile(path.resolve("./public/confirmation.html"));
+});
 // Admin portal
-app.get('/map', (req, res) => {
-	res.sendFile(path.resolve('./public/map.html'))
-})
-
-
+app.get("/map", (req, res) => {
+  res.sendFile(path.resolve("./public/map.html"));
+});
 
 // Middleware
 app.use(express.urlencoded({ extended: false }));
-app.use(express.static(path.join(__dirname, 'public')));
-
+app.use(express.static(path.join(__dirname, "public")));
 
 // Save for user-submitted lost cats
 
@@ -90,7 +85,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // 	formData.status = status;
 
 // 	const addLostCat = new LostCat({
-// 		
+//
 
 // 	});
 
@@ -102,16 +97,17 @@ app.use(express.static(path.join(__dirname, 'public')));
 // 	}
 // });
 
-
 // Start server
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 32211;
 app.listen(PORT, () => {
-	console.log(`Server started on port ${PORT}`);
+  console.log(`Server started on port ${PORT}`);
 });
 
 // Scrape
 
-mongoose.connect('mongodb+srv://phungdao:phung123@geolocats.jcedrpx.mongodb.net/LostCat?directConnection=true');
+mongoose.connect(
+  "mongodb+srv://phungdao:phung123@geolocats.jcedrpx.mongodb.net/LostCat"
+);
 // const url = 'https://hawaiianhumane.org/lost-pets/?speciesID=2';
 // const url2 = `${id}`
 // create a schema and model for the items
@@ -119,7 +115,7 @@ mongoose.connect('mongodb+srv://phungdao:phung123@geolocats.jcedrpx.mongodb.net/
 async function createNewLostCat(newLostCat) {
   try {
     const result = await LostCat.create(newLostCat);
-    console.log('New document created:', result);
+    console.log("New document created:", result);
   } catch (error) {
     console.error(error);
   }
@@ -128,7 +124,7 @@ async function createNewLostCat(newLostCat) {
 async function updateCatDetails(id, update) {
   try {
     const result = await LostCat.findByIdAndUpdate(id, update, { new: false });
-    console.log('Document updated:', result);
+    console.log("Document updated:", result);
   } catch (error) {
     console.error(error);
   }
@@ -137,119 +133,119 @@ async function updateCatDetails(id, update) {
 async function findDocumentsWithNullField(fieldName) {
   try {
     const query = { [fieldName]: null };
-    const result = await LostCat.find(query).select('_id');
-    console.log('Documents found:', result);
+    const result = await LostCat.find(query).select("_id");
+    console.log("Documents found:", result);
   } catch (error) {
     console.error(error);
   }
 }
 
 async function checkPetIds() {
-	var url = 'https://hawaiianhumane.org/lost-pets/?speciesID=2'
-	axios.get(url)
-		.then((response) => {
-			const html = response.data;
-			const $ = cheerio.load(html);
-			$('article').each(async function() {
-				let id = $(this).data('id');
-				let name = $(this).data('name');
-				let age = $(this).data('agetext');
-				let gender = $(this).data('gender');
-				let breed = $(this).data('primarybreed');
-				let tempLocation = $(this).children('.animal-location.card-footer').children('span.small.text-truncate').text()
-				let tempImgUrl = $(this).children().data('bg');
-				let regex = /(?:pet)/g;
-				let subst = `pets`;
-				let ogUrl = url.replace(regex, subst);
-				let regex2 = /url\('/g
-				let regex3 = /'\)/g
-				let tempImgUrl2 = tempImgUrl.replace(regex2, '')
-				let imgUrl = tempImgUrl2.replace(regex3, '')
-				let locationRegex = /Location: /guis;
-				let location = tempLocation.replace(locationRegex, '')
-				let s3imgUrl = `https://phung-stuff.s3.amazonaws.com/${id}`
-				let catID = await LostCat.findById(id).exec()
-				if(catID == null) {
-						console.log(id)
-				let newLostCat = {
-  			_id: id,
-				name: name,
-  			age: age,
-  			gender: gender,
-				breed: breed,
-				ogUrl: ogUrl,
-				imgUrl: imgUrl,
-				location: location,
-				s3imgUrl: s3imgUrl,
-				};
-				createNewLostCat(newLostCat)
-					}
-				})
-			
-		})
-		.catch((err) => {
-			console.error(err);
-		})
-} 
-// Looks for latest 15 documents and then grabs id and imgUrl and uploads image to s3
-function searchLatestDocumentsUploadImage(){
-LostCat.find().sort({ createdAt: -1 }).limit(15)
-     .then(documents => {
-        documents.forEach(doc => {
-            console.log(doc._id, doc.imgUrl)
-						let imageUrl = doc.imgUrl
-						let bucketName = 'phung-stuff';
-						let fileName = `${doc._id}`;
-						uploadImageFromUrlToS3(imageUrl, bucketName, fileName);
+  var url = "https://hawaiianhumane.org/lost-pets/?speciesID=2";
+  axios
+    .get(url)
+    .then((response) => {
+      const html = response.data;
+      const $ = cheerio.load(html);
+      $("article").each(async function () {
+        let id = $(this).data("id");
+        let name = $(this).data("name");
+        let age = $(this).data("agetext");
+        let gender = $(this).data("gender");
+        let breed = $(this).data("primarybreed");
+        let tempLocation = $(this)
+          .children(".animal-location.card-footer")
+          .children("span.small.text-truncate")
+          .text();
+        let tempImgUrl = $(this).children().data("bg");
+        let regex = /(?:pet)/g;
+        let subst = `pets`;
+        let ogUrl = url.replace(regex, subst);
+        let regex2 = /url\('/g;
+        let regex3 = /'\)/g;
+        let tempImgUrl2 = tempImgUrl.replace(regex2, "");
+        let imgUrl = tempImgUrl2.replace(regex3, "");
+        let locationRegex = /Location: /gisu;
+        let location = tempLocation.replace(locationRegex, "");
+        let s3imgUrl = `https://phung-stuff.s3.amazonaws.com/${id}`;
+        let catID = await LostCat.findById(id).exec();
+        if (catID == null) {
+          console.log(id);
+          let newLostCat = {
+            _id: id,
+            name: name,
+            age: age,
+            gender: gender,
+            breed: breed,
+            ogUrl: ogUrl,
+            imgUrl: imgUrl,
+            location: location,
+            s3imgUrl: s3imgUrl,
+          };
+          createNewLostCat(newLostCat);
+        }
+      });
     })
-					 })
-    .catch(err => {
-        console.error(err);
+    .catch((err) => {
+      console.error(err);
+    });
+}
+// Looks for latest 15 documents and then grabs id and imgUrl and uploads image to s3
+function searchLatestDocumentsUploadImage() {
+  LostCat.find()
+    .sort({ createdAt: -1 })
+    .limit(15)
+    .then((documents) => {
+      documents.forEach((doc) => {
+        console.log(doc._id, doc.imgUrl);
+        let imageUrl = doc.imgUrl;
+        let bucketName = "phung-stuff";
+        let fileName = `${doc._id}`;
+        uploadImageFromUrlToS3(imageUrl, bucketName, fileName);
+      });
+    })
+    .catch((err) => {
+      console.error(err);
     });
 }
 
 async function checkPetDetails() {
-				let fieldName = 'catColor'
-			
-				// findDocumentsWithNullField(fieldName)
-				// console.log(id);		
-				
-				// 		let id = catID._id
-				// 		console.log(id)
-				// console.log(catNull)
-				
-			
-	// var url = `https://hawaiianhumane.org/lost-pets-details/?animalID=${id}`
-	// axios.get(url)
-	// 	.then((response) => {
-	// 		const html = response.data;
-	// 		const $ = cheerio.load(html);
-	// 		$('article').each(async function() {
-	// 			let lostLocation = $('span.location-lost-value.value.c-1-2').text()
-	// 			let	catColor = $('span.color-value.value.c-1-2').text()
-					
-	// 			let update = {
-	// 			lostLocation: lostLocation,
-	// 			catColor: catColor,
-	// 			};
-	// 			updateCatDetails(id, update)
-	// 				}
-				// })
-			
-		// })
-		// .catch((err) => {
-		// 	console.error(err);
-		// })
-	// } 
+  let fieldName = "catColor";
 
+  // findDocumentsWithNullField(fieldName)
+  // console.log(id);
+
+  // 		let id = catID._id
+  // 		console.log(id)
+  // console.log(catNull)
+
+  // var url = `https://hawaiianhumane.org/lost-pets-details/?animalID=${id}`
+  // axios.get(url)
+  // 	.then((response) => {
+  // 		const html = response.data;
+  // 		const $ = cheerio.load(html);
+  // 		$('article').each(async function() {
+  // 			let lostLocation = $('span.location-lost-value.value.c-1-2').text()
+  // 			let	catColor = $('span.color-value.value.c-1-2').text()
+
+  // 			let update = {
+  // 			lostLocation: lostLocation,
+  // 			catColor: catColor,
+  // 			};
+  // 			updateCatDetails(id, update)
+  // 				}
+  // })
+
+  // })
+  // .catch((err) => {
+  // 	console.error(err);
+  // })
+  // }
 }
 
-
-function clog(){
-		console.log(itemIds)
+function clog() {
+  console.log(itemIds);
 }
-
-
 
 // async function petDetails(){
 // 	itemIds.forEach(function getPetDetails(item){
@@ -264,10 +260,9 @@ function clog(){
 // 			let age = $(this).children('.age-value.value.c-1-2')
 // 			console.log(id, name, age)
 // 		})
-// 	})		
+// 	})
 // 			setTimeout(getPetDetails, 5000)
 // })
-
 
 // }
 
@@ -341,7 +336,7 @@ function clog(){
 // 					bucketName = 'phung-stuff';
 // 					fileName = `${x}`
 // 					uploadImageFromUrlToS3(imageUrl, bucketName, fileName);
-// 					// S3 upload ends				
+// 					// S3 upload ends
 // 					let location = $('.city-state-lost-value.value.c-1-2')[0].innerText
 // 					let lostLocation = $('.location-lost-value.value.c-1-2')[0].innerText
 // 					let catColor = $('.color-value.value.c-1-2')[0].innerText
@@ -368,7 +363,5 @@ function clog(){
 // }
 // setTimeout(log, 10000)
 
-
 // enqueue the list page task
 // queue.push({ url: 'https://hawaiianhumane.org/lost-pets/?speciesID=2', type: 'list' })
-
